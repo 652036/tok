@@ -58,9 +58,10 @@ Exact paths differ by version and OS. Run `tok w` on your machine. If `docs/SOUR
 Python 3.11 or newer.
 
 ```bash
-git clone https://github.com/OWNER/ai-usage.git
-cd ai-usage
-pip install -e .
+git clone https://github.com/652036/tok.git
+cd tok
+pip install -e ".[dev]"
+tok
 ```
 
 Optional nicer tables:
@@ -78,7 +79,7 @@ tok --help
 From a source checkout without install:
 
 ```bash
-PYTHONPATH=src python -m ai_usage --help
+PYTHONPATH=src python -m tok --help
 ```
 
 ## Usage
@@ -131,7 +132,7 @@ Everything stays on the local filesystem.
 
 1. **Discover** well-known data directories under your home (or `-H/--home`).
 2. **Parse** usage metadata only — timestamps, model names, token counters, optional recorded cost, project/session ids. Parsers do not read prompt or completion text, and they never print API keys.
-3. **Price** each event: use the log's own cost when present; otherwise look up public list prices in `src/ai_usage/pricing_data.json`.
+3. **Price** each event: use the log's own cost when present; otherwise look up public list prices in `src/tok/pricing_data.json`.
 4. **Aggregate** and print a table or JSON.
 
 No cloud account is contacted. You can run this offline.
@@ -162,7 +163,8 @@ No config file is required.
 | Flag / environment | Meaning |
 | --- | --- |
 | `-H` / `--home PATH` | Treat `PATH` as the home directory when locating CLI data |
-| `AI_USAGE_HOME` | Same as `--home` when the flag is omitted |
+| `TOK_HOME` | Same as `--home` when the flag is omitted (preferred) |
+| `AI_USAGE_HOME` | Deprecated alias for `TOK_HOME` |
 | `-S` / `--since YYYY-MM-DD` | Include events on/after that Asia/Shanghai calendar day |
 | `-U` / `--until YYYY-MM-DD` | Include events on/before that Asia/Shanghai calendar day |
 | `-t` / `--tool NAME` | Restrict to one or more tool ids |
@@ -174,8 +176,8 @@ The default timezone for `-S` / `--since` and `-U` / `--until` and for the **by-
 ## Development
 
 ```bash
-git clone https://github.com/OWNER/ai-usage.git
-cd ai-usage
+git clone https://github.com/652036/tok.git
+cd tok
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
@@ -187,15 +189,15 @@ Shared types and field names live in [DESIGN.md](DESIGN.md). Do not rename `Usag
 
 Suggested layout:
 
-- `src/ai_usage/models.py` — `UsageEvent`, `CostBreakdown`
-- `src/ai_usage/pricing.py` + `pricing_data.json` — `price_event()`
-- `src/ai_usage/parsers/` — one module per CLI, each exposing `parse(root=None) -> list[UsageEvent]`
-- `src/ai_usage/cli.py` / `report.py` — this CLI and tables
+- `src/tok/models.py` — `UsageEvent`, `CostBreakdown`
+- `src/tok/pricing.py` + `pricing_data.json` — `price_event()`
+- `src/tok/parsers/` — one module per CLI, each exposing `parse(root=None) -> list[UsageEvent]`
+- `src/tok/cli.py` / `report.py` — this CLI and tables
 - `docs/SOURCES.md` — where each parser looks on disk (when present)
 
 ## License
 
-[MIT](LICENSE). Copyright (c) ai-usage contributors.
+[MIT](LICENSE). Copyright (c) tok contributors.
 
 ## Contributing
 

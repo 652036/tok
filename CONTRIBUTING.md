@@ -21,14 +21,14 @@ pytest -q
 
 ## Adding a parser
 
-Each tool lives in `src/ai_usage/parsers/` and exposes:
+Each tool lives in `src/tok/parsers/` and exposes:
 
 ```python
 def parse(root: Path | None = None) -> list[UsageEvent]:
     ...
 ```
 
-Follow the shared `UsageEvent` contract in `src/ai_usage/models.py` (do not rename fields). Discover the default data root, and accept an override path.
+Follow the shared `UsageEvent` contract in `src/tok/models.py` (do not rename fields). Discover the default data root, and accept an override path.
 
 **Privacy is the contract:**
 
@@ -47,7 +47,7 @@ See [docs/SOURCES.md](docs/SOURCES.md) for where each CLI stores usage data.
 
 Do not invent official prices. If a model is missing, leave it unpriced (`priced=False`) and still count tokens.
 
-Rates in `src/ai_usage/pricing_data.json` come from the LiteLLM-style dump in `docs/vendor/` (same source sub2API uses). Refresh with `scripts/import_litellm_prices.py` — do not hand-edit invented numbers. See [docs/PRICING_SOURCES.md](docs/PRICING_SOURCES.md).
+Rates in `src/tok/pricing_data.json` come from the LiteLLM-style dump in `docs/vendor/` (same source sub2API uses). Refresh with `scripts/import_litellm_prices.py` — do not hand-edit invented numbers. See [docs/PRICING_SOURCES.md](docs/PRICING_SOURCES.md).
 
 - Prefer `raw_cost_usd` from the log when present; otherwise use the table.
 

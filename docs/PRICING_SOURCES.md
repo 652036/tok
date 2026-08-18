@@ -1,6 +1,6 @@
 # Pricing sources
 
-`src/ai_usage/pricing_data.json` is **not** pulled from a live official vendor API.
+`src/tok/pricing_data.json` is **not** pulled from a live official vendor API.
 It is a snapshot of the same LiteLLM-style table [sub2API](https://github.com/Wei-Shaw/sub2api) caches:
 
 1. Remote (what we vendor): https://raw.githubusercontent.com/Wei-Shaw/model-price-repo/main/model_prices_and_context_window.json

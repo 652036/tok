@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import LiteLLM-style prices into src/ai_usage/pricing_data.json.
+"""Import LiteLLM-style prices into src/tok/pricing_data.json.
 
 Same snapshot source sub2API uses (Wei-Shaw/model-price-repo, fallback
 BerriAI/litellm). LiteLLM stores USD *per token*; we store USD *per 1M tokens*.
@@ -20,7 +20,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = REPO_ROOT / "docs" / "vendor" / "model_prices_and_context_window.json"
-DEFAULT_OUTPUT = REPO_ROOT / "src" / "ai_usage" / "pricing_data.json"
+DEFAULT_OUTPUT = REPO_ROOT / "src" / "tok" / "pricing_data.json"
 
 WEI_SHAW_URL = (
     "https://raw.githubusercontent.com/Wei-Shaw/model-price-repo/"

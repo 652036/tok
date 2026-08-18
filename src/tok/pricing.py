@@ -7,7 +7,7 @@ from functools import lru_cache
 from importlib import resources
 from typing import Any
 
-from ai_usage.models import CostBreakdown, UsageEvent
+from tok.models import CostBreakdown, UsageEvent
 
 _PER_MILLION = 1_000_000.0
 
@@ -22,7 +22,7 @@ def _load_table() -> dict[str, Any]:
         "models": {},
     }
     try:
-        ref = resources.files("ai_usage").joinpath("pricing_data.json")
+        ref = resources.files("tok").joinpath("pricing_data.json")
         with ref.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
     except (FileNotFoundError, OSError, json.JSONDecodeError, ModuleNotFoundError):

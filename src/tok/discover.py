@@ -20,9 +20,18 @@ TOOL_ROOTS: dict[str, list[str]] = {
 }
 
 
+def env_home_override() -> str | None:
+    """Preferred ``$TOK_HOME``, then deprecated ``$AI_USAGE_HOME``."""
+    for name in ("TOK_HOME", "AI_USAGE_HOME"):
+        value = os.environ.get(name)
+        if value:
+            return value
+    return None
+
+
 def default_home() -> Path:
-    """``$AI_USAGE_HOME`` if set, otherwise ``Path.home()``."""
-    override = os.environ.get("AI_USAGE_HOME")
+    """``$TOK_HOME`` (preferred) or ``$AI_USAGE_HOME``, else ``Path.home()``."""
+    override = env_home_override()
     if override:
         return Path(override).expanduser()
     return Path.home()

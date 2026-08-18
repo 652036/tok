@@ -182,7 +182,7 @@ def price_events(events: Sequence[Any], costs: Sequence[Any] | None = None) -> l
     provided = list(costs) if costs is not None else []
     price_fn = None
     try:
-        from ai_usage.pricing import price_event as price_fn  # type: ignore
+        from tok.pricing import price_event as price_fn  # type: ignore
     except ImportError:
         price_fn = None
 

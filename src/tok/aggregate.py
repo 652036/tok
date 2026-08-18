@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
-from ai_usage.models import CostBreakdown, UsageEvent
-from ai_usage.pricing import price_event
+from tok.models import CostBreakdown, UsageEvent
+from tok.pricing import price_event
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ai_usage.models import UsageEvent
+    from tok.models import UsageEvent
 
 # tool name -> parse(root) callable. Other agents may populate this.
 PARSERS: dict[str, Callable[..., list]] = {}
@@ -34,7 +34,7 @@ def _try_load(name: str) -> Callable[..., list] | None:
     if name in PARSERS:
         return PARSERS[name]
     try:
-        module = importlib.import_module(f"ai_usage.parsers.{name}")
+        module = importlib.import_module(f"tok.parsers.{name}")
         parse = getattr(module, "parse")
     except (ImportError, AttributeError):
         return None
@@ -52,8 +52,8 @@ def load_all_events(
     ``opencode``, ``amp`` (and ``copilot`` if present) lazily. Missing or
     incomplete modules are skipped (``ImportError`` / ``AttributeError``).
     """
-    from ai_usage.discover import default_home
-    from ai_usage.models import UsageEvent as _UsageEvent
+    from tok.discover import default_home
+    from tok.models import UsageEvent as _UsageEvent
 
     root = Path(home) if home is not None else default_home()
     wanted = {t.lower() for t in tools} if tools is not None else None

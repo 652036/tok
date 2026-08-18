@@ -2,7 +2,7 @@
 
 Targeted path / schema (researched 2026-08, Aider-AI/aider):
 
-Default roots (under ``$AI_USAGE_HOME`` or ``Path.home()``) — **home-level
+Default roots (under ``$TOK_HOME`` or ``Path.home()``) — **home-level
 only**. We do *not* recursively scan the whole home directory for
 ``.aider.chat.history.md`` (that is too slow on a real machine)::
 
@@ -45,8 +45,8 @@ import re
 from datetime import timezone
 from pathlib import Path
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers._common import (
+from tok.models import UsageEvent
+from tok.parsers._common import (
     file_mtime,
     iter_files,
     iter_json_objects,

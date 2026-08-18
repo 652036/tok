@@ -1,10 +1,10 @@
 # tok — local multi-CLI token/cost stats
 
-Python 3.11+ CLI. Package: `ai_usage`. Entry: `tok` (deprecated alias: `ai-usage`).
+Python 3.11+ CLI. Package: `tok`. Entry: `tok` (deprecated alias: `ai-usage`).
 
 ## Shared contract (DO NOT CHANGE field names)
 
-`src/ai_usage/models.py` must export:
+`src/tok/models.py` must export:
 
 ```python
 from dataclasses import dataclass, field
@@ -43,10 +43,10 @@ Each parser: `parse(root: Path | None = None) -> list[UsageEvent]`
 Discover default roots; also accept override path.
 Never read/print API keys or message content. Usage metadata only.
 
-Pricing: `src/ai_usage/pricing.py` + `src/ai_usage/pricing_data.json`
+Pricing: `src/tok/pricing.py` + `src/tok/pricing_data.json`
 `price_event(event) -> CostBreakdown` — prefer raw_cost_usd if present, else table.
 
-CLI (`src/ai_usage/cli.py`) commands:
+CLI (`src/tok/cli.py`) commands:
 - `tok` / `tok summary` — totals by tool
 - `tok m` (aliases: model, by-model)
 - `tok d` (aliases: day, by-day)

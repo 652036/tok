@@ -37,9 +37,9 @@ Also accepted (older dumps, ``codex exec --json``, ad-hoc exports):
 - ``type == "turn.completed"`` / ``turn_completed`` with a ``usage`` object
 - flat ``input_tokens`` / ``output_tokens`` on the record
 
-Default ``root`` is ``Path.home() / ".codex"``.  If ``AI_USAGE_HOME`` is
+Default ``root`` is ``Path.home() / ".codex"``.  If ``TOK_HOME`` (or ``AI_USAGE_HOME``) is
 set, that directory is used as the home and the root becomes
-``$AI_USAGE_HOME/.codex``.
+``$TOK_HOME/.codex``.
 
 The walker reads every ``*.json`` / ``*.jsonl`` under ``root``.  Unknown
 files, binary junk, and JSON errors are skipped (the parser still
@@ -55,8 +55,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers import _common
+from tok.models import UsageEvent
+from tok.parsers import _common
 
 _SECRET_KEYS = frozenset(
     {
@@ -92,7 +92,7 @@ _UUID_RE = re.compile(
 def parse(root: Path | None = None) -> list[UsageEvent]:
     """Return usage events under ``root``.
 
-    ``root`` may be omitted (``$AI_USAGE_HOME/.codex`` or ``~/.codex``),
+    ``root`` may be omitted (``$TOK_HOME/.codex`` or ``~/.codex``),
     a home directory that contains ``.codex/``, the Codex data dir
     itself, or a single JSON/JSONL file.
     """

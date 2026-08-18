@@ -23,8 +23,8 @@ from pathlib import Path
 from typing import Any, TextIO
 from zoneinfo import ZoneInfo
 
-from ai_usage import __version__
-from ai_usage.report import (
+from tok import __version__
+from tok.report import (
     print_by_day,
     print_by_model,
     print_by_project,
@@ -140,7 +140,7 @@ def _add_common_flags(
         "--home",
         type=Path,
         default=default,
-        help="Override home directory used to locate CLI data (or set AI_USAGE_HOME)",
+        help="Override home directory used to locate CLI data (or set TOK_HOME)",
     )
 
 
@@ -211,10 +211,9 @@ def until_exclusive(date_str: str) -> datetime:
 def resolve_home(home: Path | str | None) -> Path:
     if home:
         return Path(home).expanduser()
-    env = os.environ.get("AI_USAGE_HOME")
-    if env:
-        return Path(env).expanduser()
-    return Path.home()
+    from tok.discover import default_home
+
+    return default_home()
 
 
 def parse_tool_filter(value: str | None) -> set[str] | None:
@@ -235,7 +234,7 @@ def filter_events(
     try:
         from datetime import date as date_cls
 
-        agg = importlib.import_module("ai_usage.aggregate")
+        agg = importlib.import_module("tok.aggregate")
         agg_filter = getattr(agg, "filter_events", None)
     except ImportError:
         agg_filter = None
@@ -349,7 +348,7 @@ def _as_event_list(result: Any) -> list[Any]:
 def load_events(home: Path | None = None) -> list[Any]:
     """Load usage events from all available parsers.
 
-    Prefers ``ai_usage.parsers.load_all_events``. If that import fails,
+    Prefers ``tok.parsers.load_all_events``. If that import fails,
     each known parser is imported individually and missing ones are skipped.
     """
     kwargs: dict[str, Any] = {
@@ -360,7 +359,7 @@ def load_events(home: Path | None = None) -> list[Any]:
     }
 
     try:
-        parsers_mod = importlib.import_module("ai_usage.parsers")
+        parsers_mod = importlib.import_module("tok.parsers")
     except ImportError:
         parsers_mod = None
 
@@ -383,7 +382,7 @@ def load_events(home: Path | None = None) -> list[Any]:
     failed: list[str] = []
     for name in TOOLS:
         try:
-            mod = importlib.import_module(f"ai_usage.parsers.{name}")
+            mod = importlib.import_module(f"tok.parsers.{name}")
         except ImportError:
             missing.append(name)
             continue
@@ -409,10 +408,10 @@ def load_events(home: Path | None = None) -> list[Any]:
 def price_all(events: Sequence[Any]) -> list[Any]:
     """Price each event via ``pricing.price_event`` (lazy import)."""
     try:
-        pricing = importlib.import_module("ai_usage.pricing")
+        pricing = importlib.import_module("tok.pricing")
     except ImportError as exc:
         print(
-            f"warning: cannot import ai_usage.pricing ({exc}); "
+            f"warning: cannot import tok.pricing ({exc}); "
             "using log-recorded costs only, unknown models stay unpriced",
             file=sys.stderr,
         )
@@ -422,11 +421,11 @@ def price_all(events: Sequence[Any]) -> list[Any]:
     if not callable(price_fn):
         if pricing is not None:
             print(
-                "warning: ai_usage.pricing has no price_event(); "
+                "warning: tok.pricing has no price_event(); "
                 "using log-recorded costs only",
                 file=sys.stderr,
             )
-        from ai_usage.report import price_events
+        from tok.report import price_events
 
         return price_events(events, None)
 
@@ -440,7 +439,7 @@ def price_all(events: Sequence[Any]) -> list[Any]:
                 f"{getattr(event, 'model', '?')!r}: {exc}",
                 file=sys.stderr,
             )
-            from ai_usage.report import price_events as _pe
+            from tok.report import price_events as _pe
 
             costs.append(_pe([event], None)[0])
     return costs
@@ -451,9 +450,9 @@ def try_aggregate(
     costs: Sequence[Any],
     group_by: str,
 ) -> list[Any] | None:
-    """Use ``ai_usage.aggregate`` when present; otherwise return None."""
+    """Use ``tok.aggregate`` when present; otherwise return None."""
     try:
-        agg = importlib.import_module("ai_usage.aggregate")
+        agg = importlib.import_module("tok.aggregate")
     except ImportError:
         return None
 
@@ -485,7 +484,7 @@ def try_aggregate(
         result = _call_supported(fn, **kwargs)
     except Exception as exc:
         print(
-            f"warning: ai_usage.aggregate.{chosen} failed ({exc}); "
+            f"warning: tok.aggregate.{chosen} failed ({exc}); "
             "using built-in aggregation",
             file=sys.stderr,
         )
@@ -566,7 +565,7 @@ def _event_group_key(event: Any, group_by: str) -> str:
     if group_by in ("model", "by-model"):
         return str(getattr(event, "model", "") or "")
     if group_by in ("day", "by-day"):
-        from ai_usage.report import event_day
+        from tok.report import event_day
 
         return event_day(event)
     if group_by in ("project", "by-project"):
@@ -583,7 +582,7 @@ def _enrich_rows(
     group_by: str,
 ) -> None:
     """Fill days / sessions / tool / unpriced using the original events."""
-    from ai_usage.report import event_day, session_key, total_tokens_of
+    from tok.report import event_day, session_key, total_tokens_of
 
     buckets: dict[str, dict[str, Any]] = {}
     for event, cost in zip(events, costs, strict=False):
@@ -628,7 +627,7 @@ def _enrich_rows(
 def collect_discover(home: Path) -> list[dict[str, Any]]:
     """List local CLI data directories via discover.py or a fallback map."""
     try:
-        disc = importlib.import_module("ai_usage.discover")
+        disc = importlib.import_module("tok.discover")
     except ImportError:
         disc = None
 
@@ -647,7 +646,7 @@ def collect_discover(home: Path) -> list[dict[str, Any]]:
                     seen.add(key)
                     entries.append(item)
             except Exception as exc:
-                print(f"warning: ai_usage.discover.discover failed ({exc})", file=sys.stderr)
+                print(f"warning: tok.discover.discover failed ({exc})", file=sys.stderr)
 
         roots = getattr(disc, "TOOL_ROOTS", None)
         if isinstance(roots, dict):
@@ -796,7 +795,7 @@ def _print_no_data(*, json_output: bool, file: TextIO) -> None:
     file.write("\n")
     file.write("Hints:\n")
     file.write("  - Run `tok w` to see which local CLI data directories exist.\n")
-    file.write("  - Use `-H /path` (or AI_USAGE_HOME) if data lives under another home.\n")
+    file.write("  - Use `-H /path` (or TOK_HOME) if data lives under another home.\n")
     file.write("  - Supported tools: " + ", ".join(TOOLS) + ".\n")
 
 
@@ -823,8 +822,9 @@ def run_command(args: argparse.Namespace, *, file: TextIO | None = None) -> int:
     home = resolve_home(getattr(args, "home", None))
     json_output = bool(getattr(args, "json_output", False))
 
-    # Parsers and discover honor AI_USAGE_HOME (see discover.default_home).
+    # Parsers and discover honor TOK_HOME (see discover.default_home).
     if getattr(args, "home", None):
+        os.environ["TOK_HOME"] = str(home)
         os.environ["AI_USAGE_HOME"] = str(home)
 
     if command == "discover":

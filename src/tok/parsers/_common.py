@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
-from ai_usage.models import UsageEvent
+from tok.models import UsageEvent
 
 # Filenames / path fragments that often hold secrets. Never open these.
 _SECRET_NAME_MARKERS = (
@@ -238,11 +238,10 @@ _MAX_FILE_BYTES = 32 * 1024 * 1024
 
 
 def usage_home() -> Path:
-    """Return ``$AI_USAGE_HOME`` if set, otherwise ``Path.home()``."""
-    raw = os.environ.get("AI_USAGE_HOME")
-    if raw:
-        return Path(raw).expanduser()
-    return Path.home()
+    """Return ``$TOK_HOME`` (preferred) or ``$AI_USAGE_HOME``, else ``Path.home()``."""
+    from tok.discover import default_home
+
+    return default_home()
 
 
 def _is_under(path: Path, parent: Path) -> bool:
@@ -256,10 +255,13 @@ def _is_under(path: Path, parent: Path) -> bool:
 def env_roots(*env_names: str) -> list[Path]:
     """Extra roots from official tool env vars.
 
-    When ``AI_USAGE_HOME`` is set (tests / sandboxes), only keep env roots
-    that live under that home so we never leak into a real user tree.
+    When ``TOK_HOME`` / ``AI_USAGE_HOME`` is set (tests / sandboxes), only
+    keep env roots that live under that home so we never leak into a real
+    user tree.
     """
-    override = os.environ.get("AI_USAGE_HOME")
+    from tok.discover import env_home_override
+
+    override = env_home_override()
     override_path = Path(override).expanduser() if override else None
     found: list[Path] = []
     for name in env_names:
@@ -300,7 +302,7 @@ def default_roots(*relative: str, env_vars: tuple[str, ...] = ()) -> list[Path]:
 
 
 def _is_home_dir(path: Path) -> bool:
-    """True when *path* is ``$AI_USAGE_HOME`` or the real user home.
+    """True when *path* is ``$TOK_HOME`` / ``$AI_USAGE_HOME`` or the real user home.
 
     Parsers must not recursively scan a home directory (too slow, and
     aider history files live in every repo).
@@ -330,7 +332,7 @@ def resolve_tool_roots(
     Accepts the same shapes as the Claude/Codex parsers so
     ``load_all_events(home)`` works:
 
-    * ``root is None`` — ``$AI_USAGE_HOME`` / ``Path.home()`` plus *relative*
+    * ``root is None`` — ``$TOK_HOME`` / ``Path.home()`` plus *relative*
     * a home directory that contains ``.tool`` or undotted ``tool/``
     * the tool data directory itself (``~/.grok`` or ``sample_data/grok``)
     * a single file

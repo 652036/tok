@@ -2,7 +2,7 @@
 
 Targeted path / schema (researched 2026-08, gemini-cli + ccusage + tokenuse):
 
-Default roots (under ``$AI_USAGE_HOME`` or ``Path.home()``):
+Default roots (under ``$TOK_HOME`` or ``Path.home()``):
     ~/.gemini
     ~/.config/gemini
 
@@ -46,8 +46,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers._common import (
+from tok.models import UsageEvent
+from tok.parsers._common import (
     as_int,
     extract_tokens,
     file_mtime,

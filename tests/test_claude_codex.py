@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from datetime import timezone
 from pathlib import Path
@@ -14,8 +13,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_usage.parsers.claude import parse as parse_claude  # noqa: E402
-from ai_usage.parsers.codex import parse as parse_codex  # noqa: E402
+from tok.parsers.claude import parse as parse_claude  # noqa: E402
+from tok.parsers.codex import parse as parse_codex  # noqa: E402
 
 SAMPLE = ROOT / "sample_data"
 FORBIDDEN_EXTRA_KEYS = {
@@ -96,7 +95,7 @@ def test_claude_skips_records_without_usage() -> None:
     assert len(session_events) == 2
 
 
-def test_claude_honors_ai_usage_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_claude_honors_tok_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path / "home"
     dest = home / ".claude" / "projects" / "-tmp-isolated" / "sess.jsonl"
     dest.parent.mkdir(parents=True)
@@ -106,11 +105,42 @@ def test_claude_honors_ai_usage_home(tmp_path: Path, monkeypatch: pytest.MonkeyP
         '"usage":{"input_tokens":3,"output_tokens":1}}}\n',
         encoding="utf-8",
     )
+    monkeypatch.delenv("AI_USAGE_HOME", raising=False)
+    monkeypatch.setenv("TOK_HOME", str(home))
+    events = parse_claude()
+    assert len(events) == 1
+    assert events[0].project == "/tmp/isolated"
+    assert events[0].input_tokens == 3
+
+
+def test_claude_honors_legacy_home_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    home = tmp_path / "home"
+    dest = home / ".claude" / "projects" / "-tmp-isolated" / "sess.jsonl"
+    dest.parent.mkdir(parents=True)
+    dest.write_text(
+        '{"type":"assistant","timestamp":"2026-05-01T00:00:00Z",'
+        '"cwd":"/tmp/isolated","message":{"model":"claude-test",'
+        '"usage":{"input_tokens":3,"output_tokens":1}}}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TOK_HOME", raising=False)
     monkeypatch.setenv("AI_USAGE_HOME", str(home))
     events = parse_claude()
     assert len(events) == 1
     assert events[0].project == "/tmp/isolated"
     assert events[0].input_tokens == 3
+
+
+def test_tok_home_is_preferred(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from tok.discover import default_home
+
+    preferred = tmp_path / "tok-home"
+    fallback = tmp_path / "legacy-home"
+    preferred.mkdir()
+    fallback.mkdir()
+    monkeypatch.setenv("TOK_HOME", str(preferred))
+    monkeypatch.setenv("AI_USAGE_HOME", str(fallback))
+    assert default_home() == preferred
 
 
 def test_codex_parses_rollout_and_alternate_layouts() -> None:
@@ -184,8 +214,8 @@ def test_codex_does_not_store_message_content(tmp_path: Path) -> None:
 
 
 def test_missing_root_returns_empty() -> None:
-    assert parse_claude(Path("/tmp/ai-usage-missing-claude-root")) == []
-    assert parse_codex(Path("/tmp/ai-usage-missing-codex-root")) == []
+    assert parse_claude(Path("/tmp/tok-missing-claude-root")) == []
+    assert parse_codex(Path("/tmp/tok-missing-codex-root")) == []
 
 def test_parse_accepts_home_containing_dotted_tool_dirs(tmp_path: Path) -> None:
     """load_all_events passes a home; parsers must look in .claude / .codex."""

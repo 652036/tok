@@ -19,7 +19,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 try:
-    from ai_usage.models import UsageEvent
+    from tok.models import UsageEvent
 
     HAS_MODELS = True
     MODELS_IMPORT_ERROR: Exception | None = None
@@ -29,7 +29,7 @@ except Exception as exc:  # ImportError or incomplete package
     UsageEvent = None  # type: ignore[misc, assignment]
 
 
-from ai_usage.report import (  # noqa: E402
+from tok.report import (  # noqa: E402
     format_money,
     format_tokens,
     print_by_day,
@@ -189,7 +189,7 @@ class FormatHelperTests(unittest.TestCase):
 
 class CliHelpTests(unittest.TestCase):
     def test_build_parser_help(self) -> None:
-        from ai_usage.cli import build_parser, main
+        from tok.cli import build_parser, main
 
         parser = build_parser()
         help_text = parser.format_help()
@@ -207,19 +207,19 @@ class CliHelpTests(unittest.TestCase):
         self.assertEqual(main(["--help"]), 0)
 
     def test_no_data_exits_zero(self) -> None:
-        from ai_usage.cli import main
+        from tok.cli import main
 
-        code = main(["-H", "/tmp/ai-usage-no-such-home-dir"])
+        code = main(["-H", "/tmp/tok-no-such-home-dir"])
         self.assertEqual(code, 0)
 
     def test_discover_exits_zero(self) -> None:
-        from ai_usage.cli import main
+        from tok.cli import main
 
-        code = main(["w", "-H", "/tmp/ai-usage-no-such-home-dir"])
+        code = main(["w", "-H", "/tmp/tok-no-such-home-dir"])
         self.assertEqual(code, 0)
 
     def test_legacy_aliases(self) -> None:
-        from ai_usage.cli import _CANONICAL_COMMAND, build_parser
+        from tok.cli import _CANONICAL_COMMAND, build_parser
 
         parser = build_parser()
         cases = (
@@ -240,7 +240,7 @@ class CliHelpTests(unittest.TestCase):
             )
 
     def test_home_before_and_after_subcommand(self) -> None:
-        from ai_usage.cli import build_parser
+        from tok.cli import build_parser
 
         parser = build_parser()
         before = parser.parse_args(["--home", "/tmp/foo", "m"])

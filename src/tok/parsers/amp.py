@@ -2,7 +2,7 @@
 
 Targeted path / schema (researched 2026-08, Amp + ccusage/amp + OpenUsage):
 
-Default roots (under ``$AI_USAGE_HOME`` or ``Path.home()``)::
+Default roots (under ``$TOK_HOME`` or ``Path.home()``)::
 
     ~/.amp
     ~/.config/amp
@@ -10,7 +10,7 @@ Default roots (under ``$AI_USAGE_HOME`` or ``Path.home()``)::
 
 Official extra roots:
     ``$AMP_DATA_DIR``
-    ``$XDG_DATA_HOME/amp`` (when ``AI_USAGE_HOME`` is unset or contains it)
+    ``$XDG_DATA_HOME/amp`` (when ``TOK_HOME`` is unset or contains it)
 
 Primary layout::
 
@@ -58,8 +58,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers._common import (
+from tok.models import UsageEvent
+from tok.parsers._common import (
     as_float,
     extract_cost_usd,
     extract_tokens,

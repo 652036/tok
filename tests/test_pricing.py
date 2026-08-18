@@ -9,7 +9,7 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_usage.pricing import get_rate, reload_table
+from tok.pricing import get_rate, reload_table
 
 
 def _assert_priced(model: str) -> None:

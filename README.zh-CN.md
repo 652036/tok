@@ -58,9 +58,10 @@
 需要 Python 3.11 或更高版本。
 
 ```bash
-git clone https://github.com/OWNER/ai-usage.git
-cd ai-usage
-pip install -e .
+git clone https://github.com/652036/tok.git
+cd tok
+pip install -e ".[dev]"
+tok
 ```
 
 可选，表格更好看：
@@ -78,7 +79,7 @@ tok --help
 未安装、直接从源码运行：
 
 ```bash
-PYTHONPATH=src python -m ai_usage --help
+PYTHONPATH=src python -m tok --help
 ```
 
 ## 用法
@@ -131,7 +132,7 @@ tok w
 
 1. **发现** home（或 `-H/--home`）下的常见数据目录。
 2. **解析** 用量元数据：时间戳、模型名、token 计数、可选的已记录费用、项目/会话 id。解析器不读提示词或回复正文，也绝不打印 API key。
-3. **计价**：日志里已有 cost 就用它，否则查 `src/ai_usage/pricing_data.json` 里的公开标价。
+3. **计价**：日志里已有 cost 就用它，否则查 `src/tok/pricing_data.json` 里的公开标价。
 4. **汇总** 后打印表格或 JSON。
 
 不访问任何云账号。可以离线运行。
@@ -162,7 +163,8 @@ tok w
 | 参数 / 环境变量 | 含义 |
 | --- | --- |
 | `-H` / `--home PATH` | 把 `PATH` 当作 home 来查找 CLI 数据 |
-| `AI_USAGE_HOME` | 未传 `--home` 时等同于 `--home` |
+| `TOK_HOME` | 未传 `--home` 时等同于 `--home`（优先） |
+| `AI_USAGE_HOME` | `TOK_HOME` 的旧名，仍可用 |
 | `-S` / `--since YYYY-MM-DD` | 含该日 0 点（Asia/Shanghai）及之后 |
 | `-U` / `--until YYYY-MM-DD` | 含该日全天（Asia/Shanghai） |
 | `-t` / `--tool NAME` | 只统计指定工具 |
@@ -174,8 +176,8 @@ tok w
 ## 开发
 
 ```bash
-git clone https://github.com/OWNER/ai-usage.git
-cd ai-usage
+git clone https://github.com/652036/tok.git
+cd tok
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
@@ -187,15 +189,15 @@ pytest -q
 
 建议布局：
 
-- `src/ai_usage/models.py` — `UsageEvent`、`CostBreakdown`
-- `src/ai_usage/pricing.py` + `pricing_data.json` — `price_event()`
-- `src/ai_usage/parsers/` — 每个 CLI 一个模块，导出 `parse(root=None) -> list[UsageEvent]`
-- `src/ai_usage/cli.py` / `report.py` — 本 CLI 与表格
+- `src/tok/models.py` — `UsageEvent`、`CostBreakdown`
+- `src/tok/pricing.py` + `pricing_data.json` — `price_event()`
+- `src/tok/parsers/` — 每个 CLI 一个模块，导出 `parse(root=None) -> list[UsageEvent]`
+- `src/tok/cli.py` / `report.py` — 本 CLI 与表格
 - `docs/SOURCES.md` — 各解析器在磁盘上的查找位置（若有）
 
 ## 许可证
 
-[MIT](LICENSE)。Copyright (c) ai-usage contributors.
+[MIT](LICENSE)。Copyright (c) tok contributors.
 
 ## 参与贡献
 

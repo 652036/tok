@@ -20,11 +20,11 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_usage.parsers.aider import parse as parse_aider  # noqa: E402
-from ai_usage.parsers.amp import parse as parse_amp  # noqa: E402
-from ai_usage.parsers.gemini import parse as parse_gemini  # noqa: E402
-from ai_usage.parsers.grok import parse as parse_grok  # noqa: E402
-from ai_usage.parsers.opencode import parse as parse_opencode  # noqa: E402
+from tok.parsers.aider import parse as parse_aider  # noqa: E402
+from tok.parsers.amp import parse as parse_amp  # noqa: E402
+from tok.parsers.gemini import parse as parse_gemini  # noqa: E402
+from tok.parsers.grok import parse as parse_grok  # noqa: E402
+from tok.parsers.opencode import parse as parse_opencode  # noqa: E402
 
 SAMPLE = ROOT / "sample_data"
 

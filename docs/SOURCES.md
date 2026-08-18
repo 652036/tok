@@ -1,6 +1,6 @@
 # Local log sources and pricing notes
 
-Research date: **2026-08-18**. Official prices live in `src/ai_usage/pricing_data.json`; every official URL is listed in `docs/PRICING_SOURCES.md`.
+Research date: **2026-08-18**. Official prices live in `src/tok/pricing_data.json`; every official URL is listed in `docs/PRICING_SOURCES.md`.
 
 This file documents **default local paths**, **JSON/JSONL field names**, **how community tools parse them**, and **pitfalls**. Field names below are taken from official docs or from parser source that was actually opened. If a field is not cited, it is marked **unknown** — do not invent it.
 

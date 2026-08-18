@@ -7,9 +7,9 @@ Claude Code stores append-only JSONL transcripts at::
 and sometimes extra JSONL under ``~/.claude/stats``.  This module walks
 ``root`` recursively for ``*.jsonl`` / ``*.json``.
 
-Default ``root`` is ``Path.home() / ".claude"``.  If ``AI_USAGE_HOME`` is
+Default ``root`` is ``Path.home() / ".claude"``.  If ``TOK_HOME`` (or ``AI_USAGE_HOME``) is
 set, that directory is used as the home and the root becomes
-``$AI_USAGE_HOME/.claude``.
+``$TOK_HOME/.claude``.
 
 Record schema (verified against ccusage's usageDataSchema and Claude Code
 JSONL docs, 2026):
@@ -56,8 +56,8 @@ from pathlib import Path
 from typing import Any, Iterator, Optional
 from urllib.parse import unquote
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers import _common
+from tok.models import UsageEvent
+from tok.parsers import _common
 
 _SECRET_KEYS = frozenset(
     {
@@ -88,7 +88,7 @@ _UUID_RE = re.compile(
 def parse(root: Path | None = None) -> list[UsageEvent]:
     """Return usage events under ``root``.
 
-    ``root`` may be omitted (``$AI_USAGE_HOME/.claude`` or ``~/.claude``),
+    ``root`` may be omitted (``$TOK_HOME/.claude`` or ``~/.claude``),
     a home directory that contains ``.claude/``, the Claude data dir
     itself, or a single JSON/JSONL file.
     """

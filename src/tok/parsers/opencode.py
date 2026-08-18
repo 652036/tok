@@ -3,7 +3,7 @@
 Targeted path / schema (researched 2026-08, opencode + ccusage +
 opencode-usage-cli):
 
-Default roots (under ``$AI_USAGE_HOME`` or ``Path.home()``)::
+Default roots (under ``$TOK_HOME`` or ``Path.home()``)::
 
     ~/.opencode
     ~/.config/opencode
@@ -55,8 +55,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from ai_usage.models import UsageEvent
-from ai_usage.parsers._common import (
+from tok.models import UsageEvent
+from tok.parsers._common import (
     env_roots,
     extract_tokens,
     file_mtime,
@@ -188,7 +188,7 @@ def _event_from_opencode_obj(
 
 
 def _cost_from(*objs: Any) -> float | None:
-    from ai_usage.parsers._common import extract_cost_usd
+    from tok.parsers._common import extract_cost_usd
 
     for obj in objs:
         if isinstance(obj, dict):

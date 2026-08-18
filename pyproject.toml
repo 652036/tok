@@ -30,14 +30,14 @@ dependencies = [
 dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]
-tok = "ai_usage.cli:main"
-ai-usage = "ai_usage.cli:main"
+tok = "tok.cli:main"
+ai-usage = "tok.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-ai_usage = ["py.typed", "pricing_data.json"]
+tok = ["py.typed", "pricing_data.json"]
 
 [tool.ruff]
 line-length = 100

@@ -23,7 +23,7 @@ assignees: ""
 
 - OS:
 - Python version:
-- `ai-usage` version / commit:
+- `tok` version / commit:
 - CLI tool involved (claude / codex / grok / gemini / …):
 
 ## Extra (redacted)

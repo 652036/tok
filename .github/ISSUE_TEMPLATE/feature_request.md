@@ -12,7 +12,7 @@ assignees: ""
 
 ## Proposal
 
-<!-- What should ai-usage do? -->
+<!-- What should tok do? -->
 
 ## Notes
 
