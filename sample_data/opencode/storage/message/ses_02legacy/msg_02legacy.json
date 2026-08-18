@@ -1,0 +1,24 @@
+{
+  "id": "msg_02legacy",
+  "role": "assistant",
+  "metadata": {
+    "sessionID": "ses_02legacy",
+    "time": {
+      "created": 1770001000000
+    },
+    "assistant": {
+      "modelID": "gpt-4.1",
+      "providerID": "openai",
+      "cost": 0.005,
+      "tokens": {
+        "input": 100,
+        "output": 20,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      }
+    }
+  }
+}

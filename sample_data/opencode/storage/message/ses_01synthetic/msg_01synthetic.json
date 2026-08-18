@@ -1,0 +1,20 @@
+{
+  "id": "msg_01synthetic",
+  "role": "assistant",
+  "sessionID": "ses_01synthetic",
+  "modelID": "claude-sonnet-4",
+  "providerID": "anthropic",
+  "cost": 0.021,
+  "tokens": {
+    "input": 400,
+    "output": 90,
+    "reasoning": 12,
+    "cache": {
+      "read": 40,
+      "write": 8
+    }
+  },
+  "time": {
+    "created": 1770000001000
+  }
+}

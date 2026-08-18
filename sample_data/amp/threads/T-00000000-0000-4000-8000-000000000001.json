@@ -1,0 +1,36 @@
+{
+  "id": "T-00000000-0000-4000-8000-000000000001",
+  "created": 1770100000000,
+  "title": "synthetic-thread",
+  "messages": [
+    {
+      "role": "user",
+      "messageId": 1
+    },
+    {
+      "role": "assistant",
+      "messageId": 2,
+      "timestamp": "2026-08-02T09:00:10Z",
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "inputTokens": 100,
+        "outputTokens": 50,
+        "cacheCreationInputTokens": 500,
+        "cacheReadInputTokens": 200,
+        "credits": 1.5
+      }
+    },
+    {
+      "role": "assistant",
+      "messageId": 3,
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "input": 40,
+        "output": 12,
+        "cache_read": 10,
+        "cache_write": 0,
+        "credits": 0.4
+      }
+    }
+  ]
+}

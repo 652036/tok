@@ -1,0 +1,24 @@
+{
+  "id": "ses_01synthetic",
+  "projectID": "projhash",
+  "directory": "/home/user/demo-repo",
+  "title": "synthetic-session",
+  "cost": 0.021,
+  "model": {
+    "id": "claude-sonnet-4",
+    "providerID": "anthropic"
+  },
+  "tokens": {
+    "input": 400,
+    "output": 90,
+    "reasoning": 12,
+    "cache": {
+      "read": 40,
+      "write": 8
+    }
+  },
+  "time": {
+    "created": 1770000000000,
+    "updated": 1770000060000
+  }
+}

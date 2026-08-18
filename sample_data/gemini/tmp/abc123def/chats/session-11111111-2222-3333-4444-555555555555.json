@@ -1,0 +1,25 @@
+{
+  "sessionId": "11111111-2222-3333-4444-555555555555",
+  "projectHash": "abc123def",
+  "startTime": "2026-04-01T10:00:00.000Z",
+  "messages": [
+    {
+      "id": "u1",
+      "type": "user",
+      "timestamp": "2026-04-01T10:00:01.000Z"
+    },
+    {
+      "id": "g1",
+      "type": "gemini",
+      "timestamp": "2026-04-01T10:00:10.000Z",
+      "model": "gemini-2.5-flash",
+      "tokens": {
+        "input": 80,
+        "output": 15,
+        "cached": 0,
+        "thoughts": 3,
+        "total": 98
+      }
+    }
+  ]
+}
