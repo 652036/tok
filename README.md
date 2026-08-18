@@ -169,7 +169,7 @@ No config file is required.
 | `-U` / `--until YYYY-MM-DD` | Include events on/before that Asia/Shanghai calendar day |
 | `-t` / `--tool NAME` | Restrict to one or more tool ids |
 | `-j` / `--json` | JSON instead of a table |
-| `AI_USAGE_DEBUG=1` | Print a traceback on unexpected errors |
+| `TOK_DEBUG=1` | Print a traceback on unexpected errors |
 
 The default timezone for `-S` / `--since` and `-U` / `--until` and for the **by-day** view is **Asia/Shanghai**. Event timestamps are stored as timezone-aware UTC internally.
 

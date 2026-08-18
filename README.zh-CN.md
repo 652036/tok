@@ -169,7 +169,7 @@ tok w
 | `-U` / `--until YYYY-MM-DD` | 含该日全天（Asia/Shanghai） |
 | `-t` / `--tool NAME` | 只统计指定工具 |
 | `-j` / `--json` | 输出 JSON |
-| `AI_USAGE_DEBUG=1` | 意外错误时打印 traceback |
+| `TOK_DEBUG=1` | 意外错误时打印 traceback |
 
 `-S` / `--since` 与 `-U` / `--until` 以及 **by-day** 视图的默认时区是 **Asia/Shanghai**。事件时间在内部按带时区的 UTC 存储。
 

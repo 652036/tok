@@ -167,7 +167,7 @@ def test_grok_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         + "\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("AI_USAGE_HOME", str(home))
+    monkeypatch.setenv("TOK_HOME", str(home))
     monkeypatch.delenv("GROK_HOME", raising=False)
     events = parse_grok()
     assert len(events) == 1
@@ -222,7 +222,7 @@ def test_gemini_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         + "\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("AI_USAGE_HOME", str(home))
+    monkeypatch.setenv("TOK_HOME", str(home))
     events = parse_gemini()
     assert len(events) == 1
     assert events[0].input_tokens == 8
@@ -277,7 +277,7 @@ def test_aider_history_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
         "Tokens: 100 sent, 20 received. Cost: $0.01 message, $0.01 session.\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("AI_USAGE_HOME", str(tmp_path / "empty-home"))
+    monkeypatch.setenv("TOK_HOME", str(tmp_path / "empty-home"))
     (tmp_path / "empty-home").mkdir()
     monkeypatch.setenv("AIDER_HISTORY", str(hist))
     events = parse_aider()
@@ -295,7 +295,7 @@ def test_aider_default_does_not_scan_home_tree(
     buried = home / "projects" / "huge" / ".aider.chat.history.md"
     buried.parent.mkdir(parents=True)
     buried.write_text("Tokens: 999 sent, 1 received.\n", encoding="utf-8")
-    monkeypatch.setenv("AI_USAGE_HOME", str(home))
+    monkeypatch.setenv("TOK_HOME", str(home))
     monkeypatch.delenv("AIDER_HISTORY", raising=False)
     assert parse_aider() == []
 
@@ -418,7 +418,7 @@ def test_opencode_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("AI_USAGE_HOME", str(home))
+    monkeypatch.setenv("TOK_HOME", str(home))
     events = parse_opencode()
     assert len(events) == 1
     assert events[0].input_tokens == 6
@@ -492,7 +492,7 @@ def test_amp_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("AI_USAGE_HOME", str(home))
+    monkeypatch.setenv("TOK_HOME", str(home))
     events = parse_amp()
     assert len(events) == 1
     assert events[0].input_tokens == 4

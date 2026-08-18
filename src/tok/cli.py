@@ -841,7 +841,7 @@ def run_command(args: argparse.Namespace, *, file: TextIO | None = None) -> int:
         events = load_events(home)
     except Exception as exc:
         print(f"error: failed to load usage events: {exc}", file=sys.stderr)
-        if os.environ.get("AI_USAGE_DEBUG"):
+        if os.environ.get("TOK_DEBUG"):
             traceback.print_exc()
         return 1
 
@@ -888,7 +888,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 130
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
-        if os.environ.get("AI_USAGE_DEBUG"):
+        if os.environ.get("TOK_DEBUG"):
             traceback.print_exc()
         return 1
 
