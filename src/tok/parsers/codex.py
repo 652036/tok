@@ -51,9 +51,10 @@ keys, cookies, and authorization headers are never stored.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any
 
 from tok.models import UsageEvent
 from tok.parsers import _common
@@ -144,11 +145,11 @@ class _FileState:
     """Per-file session context for Codex rollout envelopes."""
 
     def __init__(self) -> None:
-        self.session_id: Optional[str] = None
-        self.cwd: Optional[str] = None
-        self.version: Optional[str] = None
-        self.model: Optional[str] = None
-        self.prev_total: Optional[dict[str, int]] = None
+        self.session_id: str | None = None
+        self.cwd: str | None = None
+        self.version: str | None = None
+        self.model: str | None = None
+        self.prev_total: dict[str, int] | None = None
 
 
 def _absorb_context(record: dict[str, Any], state: _FileState) -> None:
@@ -191,7 +192,7 @@ def _iter_records(path: Path) -> Iterator[dict[str, Any]]:
 
 def _record_to_event(
     record: dict[str, Any], path: Path, state: _FileState
-) -> Optional[UsageEvent]:
+) -> UsageEvent | None:
     usage = _extract_usage(record, state)
     if usage is None:
         return None
@@ -238,7 +239,7 @@ def _record_to_event(
     )
 
 
-def _extract_usage(record: dict[str, Any], state: _FileState) -> Optional[dict[str, Any]]:
+def _extract_usage(record: dict[str, Any], state: _FileState) -> dict[str, Any] | None:
     rec_type = _as_str(record.get("type"))
     payload = record.get("payload") if isinstance(record.get("payload"), dict) else None
 
@@ -259,7 +260,7 @@ def _extract_usage(record: dict[str, Any], state: _FileState) -> Optional[dict[s
     return None
 
 
-def _usage_from_token_count(payload: dict[str, Any], state: _FileState) -> Optional[dict[str, Any]]:
+def _usage_from_token_count(payload: dict[str, Any], state: _FileState) -> dict[str, Any] | None:
     info = payload.get("info")
     if not isinstance(info, dict):
         # Some early dumps put the buckets directly on payload.
@@ -287,7 +288,7 @@ def _usage_from_token_count(payload: dict[str, Any], state: _FileState) -> Optio
 
 
 def _usage_candidates(
-    record: dict[str, Any], payload: Optional[dict[str, Any]]
+    record: dict[str, Any], payload: dict[str, Any] | None
 ) -> Iterator[Any]:
     yield record.get("usage")
     yield record.get("token_usage")
@@ -328,7 +329,7 @@ def _bucket_ints(usage: dict[str, Any]) -> dict[str, int]:
 
 def _tokens_from_usage(
     usage: dict[str, Any], *, cached_inside_input: bool
-) -> Optional[tuple[int, int, int, int, int]]:
+) -> tuple[int, int, int, int, int] | None:
     raw_in = _as_int(usage.get("input_tokens", usage.get("input")))
     out = _as_int(usage.get("output_tokens", usage.get("output")))
     cache_read = _as_int(
@@ -351,7 +352,7 @@ def _tokens_from_usage(
     return inp, out, cache_read, cache_write, reasoning
 
 
-def _session_from_filename(path: Path) -> Optional[str]:
+def _session_from_filename(path: Path) -> str | None:
     match = _UUID_RE.search(path.stem)
     if match:
         return match.group(0)
@@ -361,7 +362,7 @@ def _session_from_filename(path: Path) -> Optional[str]:
     return stem or None
 
 
-def _safe_extra(*, cwd: Optional[str], version: Optional[str]) -> dict[str, str]:
+def _safe_extra(*, cwd: str | None, version: str | None) -> dict[str, str]:
     extra: dict[str, str] = {}
     if cwd:
         extra["cwd"] = cwd
@@ -373,7 +374,7 @@ def _safe_extra(*, cwd: Optional[str], version: Optional[str]) -> dict[str, str]
     return extra
 
 
-def _parse_timestamp(value: Any) -> Optional[datetime]:
+def _parse_timestamp(value: Any) -> datetime | None:
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -409,7 +410,7 @@ def _as_int(value: Any) -> int:
         return 0
 
 
-def _as_float(value: Any) -> Optional[float]:
+def _as_float(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
@@ -418,7 +419,7 @@ def _as_float(value: Any) -> Optional[float]:
         return None
 
 
-def _as_str(value: Any) -> Optional[str]:
+def _as_str(value: Any) -> str | None:
     if isinstance(value, str) and value.strip():
         return value
     return None

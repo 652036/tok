@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -15,15 +14,15 @@ class UsageEvent:
     tool: str  # claude | codex | grok | gemini | aider | opencode | amp | copilot
     timestamp: datetime  # timezone-aware UTC
     model: str
-    project: Optional[str]
+    project: str | None
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_tokens: int = 0
     cache_write_tokens: int = 0
     reasoning_tokens: int = 0
-    raw_cost_usd: Optional[float] = None  # if the log already recorded a cost
+    raw_cost_usd: float | None = None  # if the log already recorded a cost
     source_path: str = ""
-    session_id: Optional[str] = None
+    session_id: str | None = None
     extra: dict = field(default_factory=dict)
 
     @property

@@ -42,6 +42,14 @@ tok = ["py.typed", "pricing_data.json"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+ignore = [
+  "UP017",   # timezone.utc is fine
+  "E501",    # line length handled by formatter; don't fail CI
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

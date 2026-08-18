@@ -51,7 +51,6 @@ Part files under ``storage/part/`` hold message *content* and are skipped.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 

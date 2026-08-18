@@ -51,9 +51,10 @@ authorization headers are never copied into :class:`UsageEvent.extra`.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any
 from urllib.parse import unquote
 
 from tok.models import UsageEvent
@@ -143,7 +144,7 @@ def _iter_records(path: Path) -> Iterator[dict[str, Any]]:
                     yield item
 
 
-def _record_to_event(record: dict[str, Any], path: Path) -> Optional[UsageEvent]:
+def _record_to_event(record: dict[str, Any], path: Path) -> UsageEvent | None:
     usage = _find_usage(record)
     if usage is None:
         return None
@@ -186,7 +187,7 @@ def _record_to_event(record: dict[str, Any], path: Path) -> Optional[UsageEvent]
     )
 
 
-def _find_usage(record: dict[str, Any]) -> Optional[dict[str, Any]]:
+def _find_usage(record: dict[str, Any]) -> dict[str, Any] | None:
     for candidate in (
         record.get("usage"),
         record.get("message", {}).get("usage")
@@ -202,7 +203,7 @@ def _has_usage_keys(obj: dict[str, Any]) -> bool:
     return any(key in obj for key in _USAGE_KEYS)
 
 
-def _tokens_from_usage(usage: dict[str, Any]) -> Optional[tuple[int, int, int, int, int]]:
+def _tokens_from_usage(usage: dict[str, Any]) -> tuple[int, int, int, int, int] | None:
     inp = _as_int(usage.get("input_tokens"))
     out = _as_int(usage.get("output_tokens"))
     cache_read = _as_int(
@@ -217,7 +218,7 @@ def _tokens_from_usage(usage: dict[str, Any]) -> Optional[tuple[int, int, int, i
     return inp, out, cache_read, cache_write, reasoning
 
 
-def _project_from_path(path: Path) -> Optional[str]:
+def _project_from_path(path: Path) -> str | None:
     parts = path.parts
     try:
         idx = parts.index("projects")
@@ -240,7 +241,7 @@ def _decode_project_dir(name: str) -> str:
     return decoded
 
 
-def _session_from_filename(path: Path) -> Optional[str]:
+def _session_from_filename(path: Path) -> str | None:
     match = _UUID_RE.search(path.stem)
     if match:
         return match.group(0)
@@ -248,7 +249,7 @@ def _session_from_filename(path: Path) -> Optional[str]:
     return stem or None
 
 
-def _safe_extra(*, cwd: Optional[str], version: Optional[str]) -> dict[str, str]:
+def _safe_extra(*, cwd: str | None, version: str | None) -> dict[str, str]:
     extra: dict[str, str] = {}
     if cwd:
         extra["cwd"] = cwd
@@ -260,7 +261,7 @@ def _safe_extra(*, cwd: Optional[str], version: Optional[str]) -> dict[str, str]
     return extra
 
 
-def _parse_timestamp(value: Any) -> Optional[datetime]:
+def _parse_timestamp(value: Any) -> datetime | None:
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -296,7 +297,7 @@ def _as_int(value: Any) -> int:
         return 0
 
 
-def _as_float(value: Any) -> Optional[float]:
+def _as_float(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
@@ -305,7 +306,7 @@ def _as_float(value: Any) -> Optional[float]:
         return None
 
 
-def _as_str(value: Any) -> Optional[str]:
+def _as_str(value: Any) -> str | None:
     if isinstance(value, str) and value.strip():
         return value
     return None
