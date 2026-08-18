@@ -49,6 +49,7 @@ coverage.xml
 Thumbs.db
 Desktop.ini
 
-# Real usage dumps (sample_data/ stays tracked)
-usage.json
+# Real usage dumps at repo root. sample_data/ fixtures stay tracked.
+/usage.json
 *.local.json
+!sample_data/**
