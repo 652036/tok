@@ -281,24 +281,35 @@ def env_roots(*env_names: str) -> list[Path]:
 
 
 def default_roots(*relative: str, env_vars: tuple[str, ...] = ()) -> list[Path]:
-    """Typical dirs under ``usage_home()`` plus optional official env roots."""
+    """Typical dirs under ``usage_home()`` plus optional official env roots.
+
+    Also appends :func:`tok.discover.extra_platform_roots` for the inferred
+    tool so ``tok w`` and parsers stay consistent. Those extras are empty
+    when ``$TOK_HOME`` / ``$AI_USAGE_HOME`` is set.
+    """
+    from tok.discover import extra_platform_roots
+
     home = usage_home()
     roots = [home.joinpath(*rel.split("/")) for rel in relative]
     roots.extend(env_roots(*env_vars))
-    # De-dupe while preserving order.
-    seen: set[Path] = set()
-    out: list[Path] = []
-    for r in roots:
-        key = r
-        try:
-            key = r.resolve()
-        except OSError:
-            pass
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(r)
-    return out
+    tool = _tool_from_relatives(relative)
+    if tool:
+        roots.extend(extra_platform_roots(tool))
+    return _dedupe_paths(roots)
+
+
+def _tool_from_relatives(relative: tuple[str, ...]) -> str | None:
+    from tok.discover import TOOL_ROOTS
+
+    names = set(TOOL_ROOTS)
+    for rel in relative:
+        last = rel.split("/")[-1]
+        if last in names:
+            return last
+        stripped = last.lstrip(".")
+        if stripped in names:
+            return stripped
+    return None
 
 
 

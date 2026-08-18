@@ -244,3 +244,23 @@ def test_parse_accepts_home_containing_dotted_tool_dirs(tmp_path: Path) -> None:
     assert len(codex_events) == 1
     assert codex_events[0].input_tokens == 8
 
+
+def test_claude_parses_xdg_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """XDG ~/.config/claude/projects/*.jsonl is parsed when TOK_HOME is the home."""
+    dest = tmp_path / ".config" / "claude" / "projects" / "-tmp-xdg" / "sess.jsonl"
+    dest.parent.mkdir(parents=True)
+    dest.write_text(
+        '{"type":"assistant","timestamp":"2026-05-03T00:00:00Z",'
+        '"cwd":"/tmp/xdg","message":{"model":"claude-xdg",'
+        '"usage":{"input_tokens":9,"output_tokens":4}}}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("AI_USAGE_HOME", raising=False)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.setenv("TOK_HOME", str(tmp_path))
+    events = parse_claude()
+    assert len(events) == 1
+    assert events[0].project == "/tmp/xdg"
+    assert events[0].input_tokens == 9
+    assert events[0].model == "claude-xdg"
+

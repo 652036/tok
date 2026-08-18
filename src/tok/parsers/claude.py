@@ -2,14 +2,18 @@
 
 Claude Code stores append-only JSONL transcripts at::
 
+    ~/.config/claude/projects/<encoded-cwd>/<session-id>.jsonl
     ~/.claude/projects/<encoded-cwd>/<session-id>.jsonl
 
-and sometimes extra JSONL under ``~/.claude/stats``.  This module walks
-``root`` recursively for ``*.jsonl`` / ``*.json``.
+and sometimes extra JSONL under ``stats/``.  This module walks each
+root recursively for ``*.jsonl`` / ``*.json``.
 
-Default ``root`` is ``Path.home() / ".claude"``.  If ``TOK_HOME`` (or ``AI_USAGE_HOME``) is
-set, that directory is used as the home and the root becomes
-``$TOK_HOME/.claude``.
+Default roots (under ``$TOK_HOME`` or ``Path.home()``)::
+
+    ~/.config/claude     # XDG; ccusage checks this first
+    ~/.claude            # legacy / official Windows %USERPROFILE%/.claude
+
+``$CLAUDE_CONFIG_DIR`` (comma-separated) is honoured in addition.
 
 Record schema (verified against ccusage's usageDataSchema and Claude Code
 JSONL docs, 2026):
@@ -89,40 +93,23 @@ _UUID_RE = re.compile(
 def parse(root: Path | None = None) -> list[UsageEvent]:
     """Return usage events under ``root``.
 
-    ``root`` may be omitted (``$TOK_HOME/.claude`` or ``~/.claude``),
-    a home directory that contains ``.claude/``, the Claude data dir
-    itself, or a single JSON/JSONL file.
+    ``root`` may be omitted (``$TOK_HOME`` / ``~`` plus ``.config/claude``
+    and ``.claude``, plus ``$CLAUDE_CONFIG_DIR``), a home directory that
+    contains those dirs, the Claude data dir itself, or a single
+    JSON/JSONL file.
     """
-    resolved = _resolve_root(root)
-    if resolved.is_file():
-        events = list(_parse_file(resolved))
-    elif resolved.is_dir():
-        events = []
-        for path in _common.iter_files([resolved], suffixes=(".jsonl", ".json")):
-            events.extend(_parse_file(path))
-    else:
-        return []
+    roots = _common.resolve_tool_roots(
+        root,
+        ".config/claude",
+        ".claude",
+        env_vars=("CLAUDE_CONFIG_DIR",),
+        undotted_name="claude",
+    )
+    events: list[UsageEvent] = []
+    for path in _common.iter_files(roots, suffixes=(".jsonl", ".json")):
+        events.extend(_parse_file(path))
     events.sort(key=lambda e: e.timestamp)
     return events
-
-
-def _resolve_root(root: Path | None) -> Path:
-    """Accept a home dir, a ``.claude`` data dir, or a single file."""
-    if root is None:
-        return _common.usage_home() / ".claude"
-    root = Path(root)
-    if root.is_file():
-        return root
-    if not root.is_dir():
-        return root
-    nested = root / ".claude"
-    if nested.exists():
-        return nested
-    # sample_data/claude (no leading dot) when pointed at a parent folder
-    undotted = root / "claude"
-    if undotted.exists():
-        return undotted
-    return root
 
 
 def _parse_file(path: Path) -> Iterator[UsageEvent]:

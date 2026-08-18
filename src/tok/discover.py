@@ -9,14 +9,14 @@ from pathlib import Path
 # Relative to default_home(). Values may be directories or files.
 # aider: .aider.chat.history.md is often per-repo, not only under $HOME.
 TOOL_ROOTS: dict[str, list[str]] = {
-    "claude": [".claude", ".claude.json"],
+    "claude": [".config/claude", ".claude", ".claude.json"],
     "codex": [".codex"],
     "grok": [".grok", ".config/grok", ".xai"],
     "gemini": [".gemini", ".config/gemini"],
     "aider": [".aider", ".aider.chat.history.md"],
     "opencode": [".opencode", ".config/opencode", ".local/share/opencode"],
     "amp": [".amp", ".config/amp"],
-    "copilot": [".config/github-copilot"],
+    "copilot": [".copilot", ".config/github-copilot"],
 }
 
 
@@ -37,12 +37,46 @@ def default_home() -> Path:
     return Path.home()
 
 
+def extra_platform_roots(tool: str) -> list[Path]:
+    """Windows / macOS locations that are not Unix home-relative paths.
+
+    Only cited official / ccusage paths belong here. When ``$TOK_HOME`` or
+    ``$AI_USAGE_HOME`` is set, return nothing so tests and sandboxes never
+    scan a real user AppData / Library tree.
+
+    Citations (why nothing extra is added today):
+
+    * OpenCode Windows session data is ``%USERPROFILE%\\.local\\share\\opencode``
+      (https://opencode.ai/docs/troubleshooting/) — already ``.local/share/opencode``
+      under ``Path.home()``. Official docs once mentioned ``%APPDATA%\\opencode``;
+      that is desktop UI state, not usage logs (https://github.com/sst/opencode/issues/702).
+    * Amp: ccusage documents ``${AMP_DATA_DIR:-~/.local/share/amp}`` only
+      (https://github.com/ccusage/ccusage/blob/main/docs/guide/amp/index.md).
+    * Claude Code official Windows home is ``%USERPROFILE%\\.claude``
+      (https://code.claude.com/docs/en/claude-directory.md). Do **not** add
+      ``~/Library/Application Support/Claude`` (Claude Desktop, not Claude Code).
+    """
+    if env_home_override():
+        return []
+    # No extra AppData / Library roots are currently cited. Home-relative
+    # Unix paths (including %USERPROFILE%\.local\share\opencode on Windows)
+    # are listed in TOOL_ROOTS instead.
+    cited: dict[str, list[Path]] = {}
+    return list(cited.get(tool, []))
+
+
 def discover(home: Path | None = None) -> dict[str, list[Path]]:
     """Return tool -> existing candidate paths (files or directories)."""
     base = Path(home) if home is not None else default_home()
     found: dict[str, list[Path]] = {}
     for tool, rels in TOOL_ROOTS.items():
         existing = [base / rel for rel in rels if (base / rel).exists()]
+        # extras only on the real-user default lookup (no explicit home).
+        # extra_platform_roots() is already empty under TOK_HOME.
+        if home is None:
+            for extra in extra_platform_roots(tool):
+                if extra.exists() and extra not in existing:
+                    existing.append(extra)
         if existing:
             found[tool] = existing
     return found

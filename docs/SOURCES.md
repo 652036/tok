@@ -36,6 +36,8 @@ ccusage does **not** support Aider or Grok/xAI CLI as of the 2026-08 docs index 
 | `~/.claude/projects/**/*.jsonl` | Legacy home path. Combined with the XDG tree. |
 | `$CLAUDE_CONFIG_DIR` | Replaces defaults. Comma-separated list allowed. |
 
+tok also looks at `~/.config/claude` (XDG, same as ccusage) and `~/.claude`. On Windows the official home equivalent is `%USERPROFILE%\.claude` (https://code.claude.com/docs/en/claude-directory.md).
+
 Sources: https://ccusage.com/guide/claude/ · https://github.com/ccusage/ccusage/blob/main/apps/ccusage/src/data-loader.ts · https://allaboutcoding.ghinda.com/where-ai-coding-clis-store-session-logs/
 
 Layout: `projects/<project-slug>/<session-id>.jsonl`. Project name is the directory under `projects/`. Session id is the filename without `.jsonl`.

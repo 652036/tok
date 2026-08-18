@@ -42,7 +42,7 @@ Subscription dashboards are incomplete, split across vendors, or missing entirel
 
 | CLI | `tool` id | Typical local data (see `discover`) |
 | --- | --- | --- |
-| Claude Code | `claude` | `~/.claude/` |
+| Claude Code | `claude` | `~/.config/claude/` or `~/.claude/` |
 | OpenAI Codex CLI | `codex` | `~/.codex/` |
 | Grok CLI | `grok` | `~/.grok/` |
 | Gemini CLI | `gemini` | `~/.gemini/` |
@@ -55,7 +55,7 @@ Exact paths differ by version and OS. Run `tok w` on your machine. If `docs/SOUR
 
 ## Install
 
-Python 3.11 or newer.
+Works on Windows, macOS, and Linux. Python 3.11 or newer. Windows needs the `tzdata` package for Asia/Shanghai day boundaries; it is installed automatically with `tok`.
 
 ```bash
 git clone https://github.com/652036/tok.git

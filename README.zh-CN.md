@@ -42,7 +42,7 @@
 
 | CLI | `tool` 标识 | 常见本机目录（以 `discover` 为准） |
 | --- | --- | --- |
-| Claude Code | `claude` | `~/.claude/` |
+| Claude Code | `claude` | `~/.config/claude/` 或 `~/.claude/` |
 | OpenAI Codex CLI | `codex` | `~/.codex/` |
 | Grok CLI | `grok` | `~/.grok/` |
 | Gemini CLI | `gemini` | `~/.gemini/` |
@@ -55,7 +55,7 @@
 
 ## 安装
 
-需要 Python 3.11 或更高版本。
+支持 Windows、macOS 和 Linux。需要 Python 3.11 或更高版本。Windows 上按 Asia/Shanghai 切日需要 `tzdata` 包，安装 `tok` 时会自动带上。
 
 ```bash
 git clone https://github.com/652036/tok.git
