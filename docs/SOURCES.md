@@ -119,26 +119,28 @@ Non-cached input = input_tokens - cached_input_tokens. ccusage clamps cached_inp
 
 ---
 
-## 3. Grok / xAI CLI — paths **confirmed**, billable token schema **partial / conflicting**
+## 3. Grok / xAI CLI — paths **confirmed**, billable token schema **confirmed** (local 2026-09)
 
 ### Default paths / globs
 
 Official: https://docs.x.ai/build/features/sessions · https://docs.x.ai/build/cli/reference · https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/17-sessions.md
 
-`${GROK_HOME:-~/.grok}/sessions/<encoded-cwd>/<session-id>/` contains `summary.json`, `updates.jsonl`, `chat_history.jsonl`, `signals.json`. grokscope also mentions `events.jsonl` (not in the grok-build tree listing).
+`${GROK_HOME:-~/.grok}/sessions/<encoded-cwd>/<session-id>/` contains `summary.json`, `updates.jsonl`, `chat_history.jsonl`, `signals.json`. On disk (2026-09) the same dir also has `events.jsonl`, `prompt_context.json`, and often `usage.json` (`grok usage` persist). grokscope also mentions `events.jsonl`.
 
 GROK_HOME overrides the base. cwd is URL-encoded; if over 255 bytes, slug+hash plus a `.cwd` file.
 
 Community extras (not official):
-- `~/.grok/logs/unified.jsonl` — https://github.com/robinebers/openusage/issues/646 claims prompt_tokens / cached_prompt_tokens / completion_tokens
+- `~/.grok/logs/unified.jsonl` — confirmed on disk 2026-09: `ctx.prompt_tokens` / `ctx.cached_prompt_tokens` / `ctx.completion_tokens` / `ctx.reasoning_tokens` on `shell.turn.inference_done` rows. Duplicates session `turn_completed` usage; tok skips `logs/` so it is not double-counted.
 - `~/.grok-tap/index.jsonl` — grokscope reverse-proxy tap; per-API-call usage only if the tap is running
 
 ### Fields
 
-- `summary.json` (official): summary/title, model ID (`current_model_id` in community parsers), created/updated timestamps, message counts, parent session
-- `signals.json` (official: token/tool/turn counters). Exact keys not fully specified. Community (https://raw.githubusercontent.com/getagentseal/codeburn/master/docs/providers/grok.md): modelsUsed, toolsUsed, contextTokensUsed
-- `updates.jsonl` (official ACP stream). Community: params._meta.totalTokens (running context size), params._meta.promptId
-- unified.jsonl (openusage #646 only, unconfirmed until seen on disk): msg, ts, sid, ctx.model, prompt_tokens, cached_prompt_tokens, completion_tokens
+- `summary.json` (official): `info.id` / `info.cwd`, `session_summary`, `generated_title`, `current_model_id`, `created_at` / `updated_at` / `last_active_at`, message counts, parent session
+- `signals.json` (official: token/tool/turn counters). On disk: `contextTokensUsed`, `contextWindowTokens`, `modelsUsed`, `toolsUsed`, `turnCount` — context-window stats, **not** billed I/O
+- `updates.jsonl` (official ACP stream). On disk every row is `{timestamp: int unix-seconds, method, params}`. Billed usage is **only** on `params.update.sessionUpdate == "turn_completed"` at `params.update.usage`: `inputTokens`, `outputTokens`, `cachedReadTokens`, `cacheCreationTokens`, `reasoningTokens`, `costUsdTicks` (1e-10 USD), `modelUsage.<model-id>.{same keys}`. `params._meta.totalTokens` is running context size.
+- `chat_history.jsonl`: conversation messages (`type`, `content`, `model_id`, …). **No** billed usage keys.
+- `usage.json` (`grok usage` JSON): `{sessionId, updatedAt, session, turns[]}`. Each turn has the same billed keys plus `endedAt`, `turnNumber`, `primaryModelId`. `session` is the cumulative total — do not also sum it.
+- unified.jsonl (openusage #646, confirmed 2026-09): `ts`, `src`, `sid`, `msg`, `ctx.prompt_tokens`, `ctx.cached_prompt_tokens`, `ctx.completion_tokens`, `ctx.reasoning_tokens`
 
 ### How community tools parse it
 
@@ -146,13 +148,16 @@ Community extras (not official):
 - grokscope https://github.com/daniel-farina/grokscope — summary.json + updates.jsonl totalTokens + optional tap
 - codeburn grok.md — estimates I/O from per-turn totalTokens curve; flags costIsEstimated; cache forced to 0
 - openusage #646 — proposes joining unified.jsonl rows to model via model-changed events / summary.json
+- tok: `updates.jsonl` `turn_completed` usage, or sibling `usage.json` turns when that envelope exists (not both)
 
 ### Pitfalls
 
-- No official billable I/O split. Official session docs do not document prompt_tokens / completion_tokens. Using totalTokens as input+output overcounts (context fill including cached replay).
-- Do not invent a schema. If unified.jsonl is absent, do not assume OpenAI-style usage objects exist.
+- `params._meta.totalTokens` / `signals.contextTokensUsed` are context fill, not billed I/O. Using them as input+output overcounts cached replay.
+- `inputTokens` is cache-inclusive (uncached = input − cachedReadTokens when input >= cache read).
+- `usage.json` `session` totals equal the sum of `turns`. Prefer turns; skip sibling `updates.jsonl` in that session dir.
+- `chat_history.jsonl` has no usage keys; do not parse it for tokens (and do not copy message bodies).
 - Long-context pricing: official xAI rates rise for the entire request once prompt is >=200k (https://docs.x.ai/developers/pricing). One model id has two rate cards.
-- Timezone: ts in the issue sample is ISO with offset; some estimators use session updated_at for the whole session (coarse).
+- Timezone: ACP `timestamp` is unix seconds UTC; `usage.json` `endedAt` / `updatedAt` are ISO-8601.
 
 ---
 
@@ -344,11 +349,11 @@ Audio input for Flash is a higher rate ($1.00 on 2.5 Flash) — not in the table
 | --- | --- | --- | --- |
 | Claude Code | Confirmed (ccusage + widespread) | Confirmed (message.usage.*) | ccusage data-loader |
 | Codex CLI | Confirmed (~/.codex/sessions/...) | Confirmed (token_count / last_token_usage) | ccusage Codex parser; not an OpenAI spec |
-| Grok CLI | Confirmed session dir (official) | Partial. Official: model + totalTokens-style context. Billable I/O only claimed in openusage 646 | grokscope / codeburn estimates |
+| Grok CLI | Confirmed session dir (official) | Confirmed 2026-09: `params.update.usage.inputTokens` etc. on `turn_completed`; `usage.json` turns; unified.jsonl `ctx.prompt_tokens` (duplicate) | tok grok parser; grok usage JSON |
 | Gemini CLI | Confirmed (~/.gemini/tmp/<hash>/chats/) | Confirmed aliases via ccusage, not an official schema | ccusage Gemini parser |
 | Aider | Confirmed defaults; analytics path opt-in | Confirmed for message_send analytics; chat history unstructured | Aider sample JSONL |
 | OpenCode | Confirmed | Confirmed tokens.{input,output,reasoning,cache} | ccusage + issue 966 dump |
 | Amp | Confirmed conventional path | Confirmed only via ccusage fixtures | ccusage amp data-loader |
 | Copilot CLI | Confirmed if OTEL file export on | Confirmed GenAI OTEL attributes | GitHub OTEL docs + ccusage |
 
-Do not guess Grok prompt_tokens if unified.jsonl is missing. Do not parse Aider markdown as JSON. Do not expect Copilot JSONL without the env vars.
+Do not treat Grok `totalTokens` as billed I/O. Do not parse Aider markdown as JSON. Do not expect Copilot JSONL without the env vars.

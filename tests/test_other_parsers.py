@@ -144,6 +144,101 @@ def test_grok_parses_turn_completed_and_aliases() -> None:
     assert alias.output_tokens == 10
 
 
+def test_grok_live_acp_params_update_usage() -> None:
+    """Regression: billed keys live at params.update.usage + nested modelUsage."""
+    events = parse_grok(SAMPLE / "grok")
+    _assert_public_safe(events, "grok")
+    acp = [e for e in events if e.session_id == "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"]
+    assert len(acp) == 1
+    ev = acp[0]
+    assert ev.model == "grok-4.6-build"
+    assert ev.input_tokens == 500  # 600 inclusive - 100 cache read
+    assert ev.output_tokens == 80
+    assert ev.cache_read_tokens == 100
+    assert ev.cache_write_tokens == 20
+    assert ev.reasoning_tokens == 15
+    assert ev.raw_cost_usd == pytest.approx(0.25)
+    assert ev.project == "proj"
+    assert ev.extra.get("format") == "grok-updates"
+    assert ev.extra.get("session_update") == "turn_completed"
+    assert ev.timestamp.year == 2026
+    assert ev.timestamp.month == 8
+
+
+def test_grok_usage_json_turns_preferred_over_updates() -> None:
+    """grok usage envelope turns win; sibling updates.jsonl must not double-count."""
+    events = parse_grok(SAMPLE / "grok")
+    sess = [e for e in events if e.session_id == "cccccccc-dddd-eeee-ffff-111111111111"]
+    assert len(sess) == 2
+    assert all(e.model == "grok-4.6-build" for e in sess)
+    assert all(e.extra.get("format") == "grok-usage" for e in sess)
+    assert all(e.input_tokens != 9999 for e in events)
+    first = next(e for e in sess if e.output_tokens == 30)
+    assert first.input_tokens == 350  # 400 - 50
+    assert first.cache_read_tokens == 50
+    assert first.cache_write_tokens == 10
+    assert first.reasoning_tokens == 2
+    assert first.raw_cost_usd == pytest.approx(0.15)
+    assert first.timestamp.year == 2026
+    assert first.timestamp.month == 9
+    second = next(e for e in sess if e.output_tokens == 40)
+    assert second.input_tokens == 350  # 500 - 150
+    assert second.cache_read_tokens == 150
+    assert second.cache_write_tokens == 0
+    assert second.reasoning_tokens == 3
+    assert second.raw_cost_usd == pytest.approx(0.25)
+
+
+def test_grok_skips_chat_history(tmp_path: Path) -> None:
+    hist = tmp_path / "chat_history.jsonl"
+    hist.write_text(
+        json.dumps({"type": "user", "content": "Hello secret prompt", "inputTokens": 99})
+        + "\n",
+        encoding="utf-8",
+    )
+    assert parse_grok(tmp_path) == []
+
+
+def test_grok_usage_envelope_session_fallback(tmp_path: Path) -> None:
+    dest = tmp_path / "usage.json"
+    dest.write_text(
+        json.dumps(
+            {
+                "sessionId": "sess-envelope",
+                "updatedAt": "2026-09-02T00:00:00Z",
+                "session": {
+                    "inputTokens": 120,
+                    "outputTokens": 8,
+                    "cachedReadTokens": 20,
+                    "cacheCreationTokens": 0,
+                    "reasoningTokens": 1,
+                    "costUsdTicks": 1000000000,
+                    "primaryModelId": "grok-4.6-build",
+                    "modelUsage": {
+                        "grok-4.6-build": {
+                            "inputTokens": 120,
+                            "outputTokens": 8,
+                            "cachedReadTokens": 20,
+                            "costUsdTicks": 1000000000,
+                        }
+                    },
+                },
+                "turns": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    events = parse_grok(tmp_path)
+    assert len(events) == 1
+    assert events[0].session_id == "sess-envelope"
+    assert events[0].model == "grok-4.6-build"
+    assert events[0].input_tokens == 100
+    assert events[0].output_tokens == 8
+    assert events[0].cache_read_tokens == 20
+    assert events[0].raw_cost_usd == pytest.approx(0.1)
+    assert events[0].extra.get("format") == "grok-usage"
+
+
 def test_grok_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path / "home"
     dest = (
