@@ -1,4 +1,4 @@
-"""Tests for grok / gemini / aider / opencode / amp parsers.
+"""Tests for grok / gemini / aider / opencode / amp / copilot parsers.
 
 Samples under ``sample_data/`` are synthetic and contain no prompts,
 completions, or credentials. These tests also assert that events stay
@@ -22,6 +22,7 @@ if str(SRC) not in sys.path:
 
 from tok.parsers.aider import parse as parse_aider  # noqa: E402
 from tok.parsers.amp import parse as parse_amp  # noqa: E402
+from tok.parsers.copilot import parse as parse_copilot  # noqa: E402
 from tok.parsers.gemini import parse as parse_gemini  # noqa: E402
 from tok.parsers.grok import parse as parse_grok  # noqa: E402
 from tok.parsers.opencode import parse as parse_opencode  # noqa: E402
@@ -75,6 +76,7 @@ def test_missing_root_returns_empty(tmp_path: Path) -> None:
     assert parse_aider(missing) == []
     assert parse_opencode(missing) == []
     assert parse_amp(missing) == []
+    assert parse_copilot(missing) == []
 
 
 def test_empty_dir_returns_empty(tmp_path: Path) -> None:
@@ -85,6 +87,7 @@ def test_empty_dir_returns_empty(tmp_path: Path) -> None:
     assert parse_aider(empty) == []
     assert parse_opencode(empty) == []
     assert parse_amp(empty) == []
+    assert parse_copilot(empty) == []
 
 
 def test_unreadable_and_malformed_files_are_skipped(tmp_path: Path) -> None:
@@ -594,6 +597,153 @@ def test_amp_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     assert events[0].session_id == "T-abc"
 
 
+# ---------------------------------------------------------------------------
+# Copilot
+# ---------------------------------------------------------------------------
+
+
+def test_copilot_parses_otel_chat_spans() -> None:
+    events = parse_copilot(SAMPLE / "copilot")
+    _assert_public_safe(events, "copilot")
+    # metric + execute_tool + invoke_agent suppressed; two chat spans remain
+    assert len(events) == 2
+
+    chat = next(e for e in events if e.model == "claude-sonnet-4")
+    assert chat.input_tokens == 19_329  # 19452 inclusive - 123 cache read
+    assert chat.output_tokens == 281
+    assert chat.cache_read_tokens == 123
+    assert chat.cache_write_tokens == 25
+    assert chat.reasoning_tokens == 128
+    assert chat.raw_cost_usd is None  # exported Copilot cost is ignored
+    assert chat.session_id == "conv-1"
+    assert chat.project == "demo-app"
+    assert chat.timestamp.year == 2026
+    assert chat.timestamp.month == 4
+    assert chat.timestamp.day == 11
+    assert chat.extra.get("format") == "copilot-otel"
+
+    mini = next(e for e in events if e.model == "gpt-5.4-mini")
+    assert mini.input_tokens == 80
+    assert mini.output_tokens == 15
+    assert mini.cache_read_tokens == 0
+    assert mini.session_id == "conv-2"
+    assert mini.project is None
+    assert mini.timestamp.year == 2026
+    assert mini.timestamp.month == 8
+
+    dumped = json.dumps([e.__dict__ for e in events], default=str)
+    assert "LEAKED_PROMPT" not in dumped
+    assert "LEAKED_COMPLETION" not in dumped
+    assert "sk-secret" not in dumped
+    assert "Bearer" not in dumped
+    assert "copilot-token" not in dumped
+
+
+def test_copilot_returns_empty_when_export_absent(tmp_path: Path) -> None:
+    copilot = tmp_path / ".copilot"
+    copilot.mkdir()
+    (copilot / "apps.json").write_text("{}", encoding="utf-8")
+    assert parse_copilot(tmp_path) == []
+    assert parse_copilot(copilot) == []
+
+
+def test_copilot_default_roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    home = tmp_path / "home"
+    dest = home / ".copilot" / "otel" / "trace.jsonl"
+    dest.parent.mkdir(parents=True)
+    dest.write_text(
+        json.dumps(
+            {
+                "type": "span",
+                "traceId": "t-home",
+                "spanId": "s-home",
+                "name": "chat gpt-5.4-mini",
+                "startTime": "2026-08-20T00:00:00Z",
+                "attributes": {
+                    "gen_ai.operation.name": "chat",
+                    "gen_ai.response.model": "gpt-5.4-mini",
+                    "gen_ai.conversation.id": "conv-home",
+                    "gen_ai.usage.input_tokens": 12,
+                    "gen_ai.usage.output_tokens": 3,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TOK_HOME", str(home))
+    monkeypatch.delenv("COPILOT_OTEL_FILE_EXPORTER_PATH", raising=False)
+    events = parse_copilot()
+    assert len(events) == 1
+    assert events[0].input_tokens == 12
+    assert events[0].session_id == "conv-home"
+
+
+def test_copilot_exporter_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    export = home / "custom-copilot.jsonl"
+    export.write_text(
+        json.dumps(
+            {
+                "type": "span",
+                "name": "chat claude-sonnet-4",
+                "startTime": [1_775_934_264, 0],
+                "attributes": {
+                    "gen_ai.operation.name": "chat",
+                    "gen_ai.request.model": "claude-sonnet-4",
+                    "gen_ai.conversation.id": "conv-export",
+                    "github.copilot.git_repository": "https://github.com/acme/widgets.git",
+                    "gen_ai.usage.input_tokens": 50,
+                    "gen_ai.usage.output_tokens": 7,
+                    "gen_ai.usage.cache_read.input_tokens": 10,
+                    "gen_ai.usage.cache_write.input_tokens": 4,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TOK_HOME", str(home))
+    monkeypatch.setenv("COPILOT_OTEL_FILE_EXPORTER_PATH", str(export))
+    events = parse_copilot()
+    assert len(events) == 1
+    assert events[0].input_tokens == 40
+    assert events[0].cache_read_tokens == 10
+    assert events[0].cache_write_tokens == 4
+    assert events[0].session_id == "conv-export"
+    assert events[0].project == "widgets"
+
+
+def test_copilot_falls_back_to_invoke_agent_when_no_chat(tmp_path: Path) -> None:
+    dest = tmp_path / "otel" / "only-agent.jsonl"
+    dest.parent.mkdir(parents=True)
+    dest.write_text(
+        json.dumps(
+            {
+                "type": "span",
+                "traceId": "t-agent",
+                "spanId": "s-agent",
+                "name": "invoke_agent GitHub Copilot Chat",
+                "startTime": "2026-09-01T00:00:00Z",
+                "attributes": {
+                    "gen_ai.operation.name": "invoke_agent",
+                    "gen_ai.response.model": "gpt-5.4-mini",
+                    "gen_ai.conversation.id": "conv-agent",
+                    "gen_ai.usage.input_tokens": 9,
+                    "gen_ai.usage.output_tokens": 2,
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    events = parse_copilot(tmp_path)
+    assert len(events) == 1
+    assert events[0].input_tokens == 9
+    assert events[0].session_id == "conv-agent"
+
+
 def test_load_all_events_discovers_undotted_sample_tree() -> None:
     """``parse(sample_data)`` must resolve sample_data/<tool>/ (home-style)."""
     grok = parse_grok(SAMPLE)
@@ -601,8 +751,10 @@ def test_load_all_events_discovers_undotted_sample_tree() -> None:
     aider = parse_aider(SAMPLE)
     opencode = parse_opencode(SAMPLE)
     amp = parse_amp(SAMPLE)
+    copilot = parse_copilot(SAMPLE)
     assert grok and all(e.tool == "grok" for e in grok)
     assert gemini and all(e.tool == "gemini" for e in gemini)
     assert aider and all(e.tool == "aider" for e in aider)
     assert opencode and all(e.tool == "opencode" for e in opencode)
     assert amp and all(e.tool == "amp" for e in amp)
+    assert copilot and all(e.tool == "copilot" for e in copilot)
