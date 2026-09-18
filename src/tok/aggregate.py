@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
@@ -45,7 +45,7 @@ class GroupStats:
         self.reasoning_tokens += event.reasoning_tokens
         breakdown = cost if cost is not None else price_event(event)
         if self.event_count == 1:
-            self.cost = breakdown
+            self.cost = replace(breakdown)
         else:
             self.cost += breakdown
 
