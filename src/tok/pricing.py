@@ -84,11 +84,10 @@ def get_rate(model: str) -> dict | None:
             if alias == needle:
                 exact = rate
                 break
+            # Only decorate a known model, never infer one from a shorter name.
             bounded = (
                 needle.startswith(alias + "-")
                 or needle.endswith("-" + alias)
-                or alias.startswith(needle + "-")
-                or alias.endswith("-" + needle)
             )
             if bounded and len(alias) > best_len:
                 best = rate
